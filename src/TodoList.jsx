@@ -14,34 +14,45 @@ import {
   Typography,
   Divider,
 } from "@mui/material";
-import { Delete, Edit } from "@mui/icons-material";
+import { Delete, Edit, More } from "@mui/icons-material";
 
 function ToDoList() {
-  const [task, setTask] = useState("");
+  const [isEditing, setIsEditing] = useState("");
+  const [input, setInput] = useState("");
   const [tasks, setTasks] = useState([]);
 
   const handleChange = (event) => {
-    setTask(event.target.value);
+    setInput(event.target.value);
   };
 
   const handleSubmit = () => {
-    if (task.trim() !== "") {
-      setTasks([
-        ...tasks,
-        { id: tasks.length + 1, text: task, completed: false },
-      ]);
-      setTask("");
+    if (input.trim() === "") {
+      return;
     }
+    if (isEditing) {
+      const updatedTasks = tasks.map((t) => {
+        if (t.id === isEditing) {
+          return { ...t, text: input };
+        }
+        return t;
+      });
+      setTasks(updatedTasks);
+      setIsEditing("");
+      setInput("");
+      return;
+    }
+    const newTask = {
+      id: tasks.length + 1,
+      text: input,
+      completed: false,
+    };
+    setTasks([...tasks, newTask]);
+    setInput("");
   };
 
-  const handleEdit = (id, newText) => {
-    const updatedTasks = tasks.map((task) => {
-      if (task.id === id) {
-        return { ...task, text: newText };
-      }
-      return task;
-    });
-    setTasks(updatedTasks);
+  const handleEdit = (id) => {
+    setIsEditing(id);
+    setInput(tasks.find((task) => task.id === id).text);
   };
 
   const handleToggleComplete = (id) => {
@@ -68,15 +79,15 @@ function ToDoList() {
           </Typography>
           <Divider />
           <TextField
-            label="Add Task"
+            label={isEditing ? "Edit Task" : "Add Task"}
             variant="outlined"
-            value={task}
+            value={input}
             onChange={handleChange}
             fullWidth
             sx={{ marginBottom: 2, marginTop: 2 }}
           />
           <Button variant="contained" onClick={handleSubmit} fullWidth>
-            Add
+            {isEditing ? "Edit Task" : "Add Task"}
           </Button>
           <List>
             {tasks.map((task) => (
@@ -91,12 +102,8 @@ function ToDoList() {
                   label={task.completed ? <s>{task.text}</s> : task.text}
                 />
                 <ListItemSecondaryAction>
-                  <IconButton
-                    onClick={() =>
-                      handleEdit(task.id, prompt("Edit Task", task.text))
-                    }
-                  >
-                    <Edit />
+                  <IconButton onClick={() => handleEdit(task.id)}>
+                    {isEditing && isEditing === task.id ? <More /> : <Edit />}
                   </IconButton>
                   <IconButton onClick={() => handleDelete(task.id)}>
                     <Delete />
